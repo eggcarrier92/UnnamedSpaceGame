@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class CarController : MonoBehaviour
@@ -14,6 +15,7 @@ public class CarController : MonoBehaviour
 
     private Transform _carTransform;
     private Collider2D[] _allColliders;
+    private Vector2 _localCenterOfMass;
 
     private bool IsGrounded
     {
@@ -40,14 +42,39 @@ public class CarController : MonoBehaviour
         _carTransform = _carRigidbody.transform;
         _allColliders = GetComponentsInChildren<Collider2D>();
     }
+    private void Awake()
+    {
+        CalculateCenterOfMass();
+    }
+
+    private void CalculateCenterOfMass()
+    {
+        _localCenterOfMass = Vector2.zero;
+        Vector2 centerOfMass = Vector2.zero;
+        float totalMass = 0f;
+        foreach (var rigidbody in GetComponentsInChildren<Rigidbody2D>().ToList())
+        {
+            centerOfMass += ((Vector2)rigidbody.transform.localPosition + rigidbody.centerOfMass) * rigidbody.mass;
+            totalMass += rigidbody.mass;
+        }
+        centerOfMass /= totalMass;
+        _localCenterOfMass = centerOfMass;
+    }
 
     private void FixedUpdate()
     {
+        ControlCar();
+    }
+
+    private void ControlCar()
+    {
+        Vector2 forcePosition = _carTransform.TransformPoint(_localCenterOfMass);
+        Debug.Log(_localCenterOfMass + " " + forcePosition);
         if (!IsGrounded)
             return;
         if (Input.GetKey(_accelerateKey))
-            _carRigidbody.AddForceAtPosition(_carTransform.right * _accelerationForce, _forcePosition + (Vector2)_carTransform.position);
+            _carRigidbody.AddForceAtPosition(_carTransform.right * _accelerationForce, forcePosition);
         if (Input.GetKey(_brakeKey))
-            _carRigidbody.AddForceAtPosition(-_carTransform.right * _brakeForce, _forcePosition + (Vector2)_carTransform.position);
+            _carRigidbody.AddForceAtPosition(-_carTransform.right * _brakeForce, forcePosition);
     }
 }
