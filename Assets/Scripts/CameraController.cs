@@ -15,6 +15,6 @@ public class CameraController : MonoBehaviour
 
     private void Update()
     {
-        _transform.rotation = Quaternion.Euler(0f, 0f, Vector2.Angle(Vector2.up, _transform.position - _planet.position));
+        _transform.rotation = Quaternion.Euler(0f, 0f, Vector2.SignedAngle(Vector2.up, _transform.position - _planet.position));
     }
 }

@@ -69,7 +69,6 @@ public class CarController : MonoBehaviour
     private void ControlCar()
     {
         Vector2 forcePosition = _carTransform.TransformPoint(_localCenterOfMass);
-        Debug.Log(_localCenterOfMass + " " + forcePosition);
         if (!IsGrounded)
             return;
         if (Input.GetKey(_accelerateKey))
