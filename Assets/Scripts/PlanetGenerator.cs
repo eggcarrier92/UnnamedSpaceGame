@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.U2D;
 
@@ -12,6 +10,7 @@ public class PlanetGenerator : MonoBehaviour
     [SerializeField] private float _tangentScale = 1f;
     [SerializeField, Range(0f, 1f)] private float _perlinNoiseScale = .5f;
     [SerializeField] private float _perlinNoiseOffset = 0f;
+    [SerializeField] private bool _isOpenEnded = false;
 
     private SpriteShapeController _shape;
 
@@ -37,9 +36,12 @@ public class PlanetGenerator : MonoBehaviour
         angularDistanceBetweenPoints = 360f / amountOfPoints;
 
         //Debug.Log($"Amount of points: {amountOfPoints}, angular distance between points: {angularDistanceBetweenPoints}");
+
+        // Set points
         for (int i = 0; i < amountOfPoints; i++)
         {
-            float distanceToPlanetCenter = _planetRadius;
+            float distanceToPlanetCenter = 
+                _planetRadius + _maxHillHeight * Mathf.PerlinNoise(i * _perlinNoiseScale + _perlinNoiseOffset, 0);
             Vector3 pointCoordinates = new(
                 distanceToPlanetCenter * Mathf.Sin(angularDistanceBetweenPoints * i * Mathf.Deg2Rad),
                 distanceToPlanetCenter * Mathf.Cos(angularDistanceBetweenPoints * i * Mathf.Deg2Rad));
@@ -48,6 +50,7 @@ public class PlanetGenerator : MonoBehaviour
             else
                 _shape.spline.SetPosition(i, pointCoordinates);
         }
+        // Set tangents
         for (int i = 0; i < _shape.spline.GetPointCount(); i++)
         {
             int previousPointIndex = i - 1;
@@ -56,6 +59,7 @@ public class PlanetGenerator : MonoBehaviour
             int nextPointIndex = i + 1;
             if (i + 1 > _shape.spline.GetPointCount() - 1)
                 nextPointIndex = 0;
+
             Vector3 directionToPreviousPoint = (_shape.spline.GetPosition(previousPointIndex) - _shape.spline.GetPosition(i)).normalized;
             Vector3 directionToNextPoint = (_shape.spline.GetPosition(nextPointIndex) - _shape.spline.GetPosition(i)).normalized;
             Vector3 average = (directionToPreviousPoint - directionToNextPoint) / 2;
@@ -68,7 +72,7 @@ public class PlanetGenerator : MonoBehaviour
     }
     private void ResetTerrain()
     {
-        _shape.spline.isOpenEnded = true;
+        _shape.spline.isOpenEnded = _isOpenEnded;
 
         LeavePoints(2);
 
