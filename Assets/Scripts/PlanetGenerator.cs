@@ -36,8 +36,35 @@ public class PlanetGenerator : MonoBehaviour
         amountOfPoints = Mathf.RoundToInt(360f / angularDistanceBetweenPoints);
         angularDistanceBetweenPoints = 360f / amountOfPoints;
 
-        Debug.Log($"Amount of points: {amountOfPoints}, angular distance between points: {angularDistanceBetweenPoints}");
-        //for (int i = 0; i < )
+        //Debug.Log($"Amount of points: {amountOfPoints}, angular distance between points: {angularDistanceBetweenPoints}");
+        for (int i = 0; i < amountOfPoints; i++)
+        {
+            float distanceToPlanetCenter = _planetRadius;
+            Vector3 pointCoordinates = new(
+                distanceToPlanetCenter * Mathf.Sin(angularDistanceBetweenPoints * i * Mathf.Deg2Rad),
+                distanceToPlanetCenter * Mathf.Cos(angularDistanceBetweenPoints * i * Mathf.Deg2Rad));
+            if (i > _shape.spline.GetPointCount() - 1)
+                _shape.spline.InsertPointAt(i, pointCoordinates);
+            else
+                _shape.spline.SetPosition(i, pointCoordinates);
+        }
+        for (int i = 0; i < _shape.spline.GetPointCount(); i++)
+        {
+            int previousPointIndex = i - 1;
+            if (i - 1 < 0)
+                previousPointIndex = _shape.spline.GetPointCount() - 1;
+            int nextPointIndex = i + 1;
+            if (i + 1 > _shape.spline.GetPointCount() - 1)
+                nextPointIndex = 0;
+            Vector3 directionToPreviousPoint = (_shape.spline.GetPosition(previousPointIndex) - _shape.spline.GetPosition(i)).normalized;
+            Vector3 directionToNextPoint = (_shape.spline.GetPosition(nextPointIndex) - _shape.spline.GetPosition(i)).normalized;
+            Vector3 average = (directionToPreviousPoint - directionToNextPoint) / 2;
+            average = average.normalized * _tangentScale;
+
+            _shape.spline.SetTangentMode(i, ShapeTangentMode.Continuous);
+            _shape.spline.SetLeftTangent(i, average);
+            _shape.spline.SetRightTangent(i, -average);
+        }
     }
     private void ResetTerrain()
     {
