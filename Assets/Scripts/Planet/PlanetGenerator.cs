@@ -14,15 +14,6 @@ public class PlanetGenerator : MonoBehaviour
 
     private SpriteShapeController _shape;
 
-    private void Start()
-    {
-        InitializeComponents();
-    }
-
-    private void InitializeComponents()
-    {
-        _shape = GetComponent<SpriteShapeController>();
-    }
 
     public void Generate()
     {
@@ -69,6 +60,10 @@ public class PlanetGenerator : MonoBehaviour
             _shape.spline.SetLeftTangent(i, average);
             _shape.spline.SetRightTangent(i, -average);
         }
+    }
+    private void InitializeComponents()
+    {
+        _shape = GetComponent<SpriteShapeController>();
     }
     private void ResetTerrain()
     {
