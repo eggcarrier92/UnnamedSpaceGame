@@ -4,10 +4,17 @@ using UnityEngine.U2D;
 public class PlanetGenerator : MonoBehaviour
 {
     [SerializeField] private float _planetRadius = 100f;
-    [SerializeField, Tooltip("This value will be rounded to the closest value that 360 is entirely divisible by")] 
+
+    [SerializeField, Tooltip("The angular distance between the points of the Sprite Shape. This value will be rounded to the closest value that 360 is entirely divisible by.")] 
     private float _angularDistanceBetweenPoints = 1f;
+
+    [SerializeField, Tooltip("Scale of each tangent of each point of the Sprite Shape.")] 
+    private float _tangentScale = 1f;
+
+    [SerializeField, Tooltip("Size of one chunk in meters. This value will be rounded to the closest value that 360 is entirely divisible by.")]
+    private float _chunkSize = 100f;
+
     [SerializeField] private float _maxHillHeight = 10f;
-    [SerializeField] private float _tangentScale = 1f;
     [SerializeField, Range(0f, 1f)] private float _perlinNoiseScale = .5f;
     [SerializeField] private float _perlinNoiseOffset = 0f;
     [SerializeField] private bool _isOpenEnded = false;
