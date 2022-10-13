@@ -81,6 +81,12 @@ public class PlanetGenerator : MonoBehaviour
             else
                 _chunks[chunkIndex].spline.SetPosition(pointIndexInChunk, pointCoordinates);
         }
+        // Fill in the gaps
+        for (int i = 0; i < _chunks.Count; i++)
+        {
+            int nextChunk = i + 1 < _chunks.Count ? i + 1 : 0;
+            _chunks[i].spline.InsertPointAt(_chunks[i].spline.GetPointCount(), _chunks[nextChunk].spline.GetPosition(0));
+        }
         //Set tangents
         //for (int i = 0; i < _chunks[0].spline.GetPointCount(); i++)
         //{
@@ -100,10 +106,10 @@ public class PlanetGenerator : MonoBehaviour
         //    _chunks[0].spline.SetLeftTangent(i, average);
         //    _chunks[0].spline.SetRightTangent(i, -average);
         //}
-        //Add a point in the center
-        //if (_chunkHasAPointInTheCenter)
-        //    foreach (var chunk in _chunks)
-        //        chunk.spline.InsertPointAt(chunk.spline.GetPointCount(), Vector3.zero);
+        // Add a point in the center
+        if (_chunkHasAPointInTheCenter)
+            foreach (var chunk in _chunks)
+                chunk.spline.InsertPointAt(chunk.spline.GetPointCount(), Vector3.zero);
     }
 
     private int RoundToClosestEntireDivisor(float dividend, ref float divisor)
