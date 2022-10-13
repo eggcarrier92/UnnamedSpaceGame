@@ -89,8 +89,8 @@ SpriteShapeRenderer:
   - {fileID: 21300000, guid: 608e61deb05c54660bebf5a4dd2ee02d, type: 3}
   - {fileID: 21300000, guid: 608e61deb05c54660bebf5a4dd2ee02d, type: 3}
   m_LocalAABB:
-    m_Center: {x: -0.50720215, y: -0.19390869, z: 0}
-    m_Extent: {x: 515.31714, y: 514.5399, z: 0}
+    m_Center: {x: 0, y: 0, z: 0}
+    m_Extent: {x: 0, y: 0, z: 0}
 --- !u!114 &2040803632957649617
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -107,9 +107,9 @@ MonoBehaviour:
     m_IsOpenEnded: 0
     m_ControlPoints:
     - position: {x: 0, y: 0, z: 0}
-      leftTangent: {x: -2.45, y: 0, z: 0}
-      rightTangent: {x: 2.45, y: 0, z: 0}
-      mode: 1
+      leftTangent: {x: 0, y: 0, z: 0}
+      rightTangent: {x: 0, y: 0, z: 0}
+      mode: 0
       height: 1
       bevelCutoff: 0
       bevelSize: 0
@@ -117,8 +117,8 @@ MonoBehaviour:
       corner: 1
       m_CornerMode: 1
     - position: {x: 1, y: 0, z: 0}
-      leftTangent: {x: -2.45, y: 0, z: 0}
-      rightTangent: {x: 2.45, y: 0, z: 0}
+      leftTangent: {x: -0.33333337, y: 0, z: 0}
+      rightTangent: {x: 0, y: 0, z: 0}
       mode: 1
       height: 1
       bevelCutoff: 0
@@ -159,8 +159,8 @@ EdgeCollider2D:
   m_EdgeRadius: 0
   m_Points:
   - {x: 0, y: 0}
-  - {x: 0.32856297, y: 0}
-  - {x: 0.59090376, y: 0}
+  - {x: 0.8512593, y: 0}
+  - {x: 0.92918515, y: 0}
   m_AdjacentStartPoint: {x: 0, y: 0}
   m_AdjacentEndPoint: {x: 0, y: 0}
   m_UseAdjacentStartPoint: 0

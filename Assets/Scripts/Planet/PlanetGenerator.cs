@@ -23,6 +23,8 @@ public class PlanetGenerator : MonoBehaviour
     /*-------------------------------------------------------------*/
     [Header("Chunk options")]
 
+    [SerializeField]
+    private GameObject _chunkPrefab;
     [SerializeField, Tooltip("Size of one chunk in meters. This value will be rounded to the closest value that the planet's circumference is entirely divisible by.")]
     private float _chunkSize = 1000f;
     [SerializeField] 
@@ -36,8 +38,13 @@ public class PlanetGenerator : MonoBehaviour
 
     public void Generate()
     {
+        if (_chunkSize < 2 * _distanceBetweenPoints)
+        {
+            Debug.LogError("Chunk size must be at least 2 times higher than distance between points");
+            return;
+        }
         InitializeComponents();
-        ResetTerrain();
+        //ResetTerrain();
 
         float planetCircumference = 2 * Mathf.PI * _planetRadius;
         float angularDistanceBetweenPoints = 360f * _distanceBetweenPoints / planetCircumference;
@@ -49,6 +56,12 @@ public class PlanetGenerator : MonoBehaviour
         //Debug.Log($"Amount of chunks: {amountOfChunks}, angular size of a chunk: {angularSizeOfChunk}");
         //Debug.Log($"Amount of points: {amountOfPoints}, angular distance between points: {angularDistanceBetweenPoints}");
 
+        foreach (var chunk in _chunks)
+            DestroyImmediate(chunk.gameObject);
+        _chunks = new();
+
+        for (int i = 0; i < amountOfChunks; i++)
+            _chunks.Add(Instantiate(_chunkPrefab, transform).GetComponent<SpriteShapeController>());
 
         // Set points
         for (int i = 0; i < amountOfPoints; i++)
@@ -58,35 +71,39 @@ public class PlanetGenerator : MonoBehaviour
             Vector3 pointCoordinates = new(
                 distanceToPlanetCenter * Mathf.Sin(angularDistanceBetweenPoints * i * Mathf.Deg2Rad),
                 distanceToPlanetCenter * Mathf.Cos(angularDistanceBetweenPoints * i * Mathf.Deg2Rad));
-            if (i > _chunks[0].spline.GetPointCount() - 1)
-                _chunks[0].spline.InsertPointAt(i, pointCoordinates);
+            int chunkIndex = Mathf.FloorToInt(angularDistanceBetweenPoints / angularSizeOfChunk * i);
+            int pointIndexInChunk = Mathf.FloorToInt(i - chunkIndex * angularSizeOfChunk / angularDistanceBetweenPoints);
+            //Debug.Log(i - chunkIndex * (angularSizeOfChunk / angularDistanceBetweenPoints - (angularSizeOfChunk / angularDistanceBetweenPoints - Mathf.Floor(angularSizeOfChunk / angularDistanceBetweenPoints))));
+            //Debug.Log($"i:{i}, chunk index: {chunkIndex}, as:{angularSizeOfChunk}, ad:{angularDistanceBetweenPoints}, as/ad:{angularSizeOfChunk/angularDistanceBetweenPoints}, as%ad:{angularSizeOfChunk % angularDistanceBetweenPoints}");
+            Debug.Log(pointIndexInChunk + " " + chunkIndex);
+            if (pointIndexInChunk > _chunks[chunkIndex].spline.GetPointCount() - 1)
+                _chunks[chunkIndex].spline.InsertPointAt(pointIndexInChunk, pointCoordinates);
             else
-                _chunks[0].spline.SetPosition(i, pointCoordinates);
+                _chunks[chunkIndex].spline.SetPosition(pointIndexInChunk, pointCoordinates);
         }
-        // Set tangents
-        for (int i = 0; i < _chunks[0].spline.GetPointCount(); i++)
-        {
-            int previousPointIndex = i - 1;
-            if (i - 1 < 0)
-                previousPointIndex = _chunks[0].spline.GetPointCount() - 1;
-            int nextPointIndex = i + 1;
-            if (i + 1 > _chunks[0].spline.GetPointCount() - 1)
-                nextPointIndex = 0;
+        //Set tangents
+        //for (int i = 0; i < _chunks[0].spline.GetPointCount(); i++)
+        //{
+        //    int previousPointIndex = i - 1;
+        //    if (i - 1 < 0)
+        //        previousPointIndex = _chunks[0].spline.GetPointCount() - 1;
+        //    int nextPointIndex = i + 1;
+        //    if (i + 1 > _chunks[0].spline.GetPointCount() - 1)
+        //        nextPointIndex = 0;
 
-            Vector3 directionToPreviousPoint = (_chunks[0].spline.GetPosition(previousPointIndex) - _chunks[0].spline.GetPosition(i)).normalized;
-            Vector3 directionToNextPoint = (_chunks[0].spline.GetPosition(nextPointIndex) - _chunks[0].spline.GetPosition(i)).normalized;
-            Vector3 average = (directionToPreviousPoint - directionToNextPoint) / 2;
-            average = average.normalized * _tangentScale;
+        //    Vector3 directionToPreviousPoint = (_chunks[0].spline.GetPosition(previousPointIndex) - _chunks[0].spline.GetPosition(i)).normalized;
+        //    Vector3 directionToNextPoint = (_chunks[0].spline.GetPosition(nextPointIndex) - _chunks[0].spline.GetPosition(i)).normalized;
+        //    Vector3 average = (directionToPreviousPoint - directionToNextPoint) / 2;
+        //    average = average.normalized * _tangentScale;
 
-            _chunks[0].spline.SetTangentMode(i, ShapeTangentMode.Continuous);
-            _chunks[0].spline.SetLeftTangent(i, average);
-            _chunks[0].spline.SetRightTangent(i, -average);
-        }
-        // Add a point in the center
-        if (_chunkHasAPointInTheCenter)
-        {
-            _chunks[0].spline.InsertPointAt(amountOfPoints, Vector2.zero);
-        }
+        //    _chunks[0].spline.SetTangentMode(i, ShapeTangentMode.Continuous);
+        //    _chunks[0].spline.SetLeftTangent(i, average);
+        //    _chunks[0].spline.SetRightTangent(i, -average);
+        //}
+        //Add a point in the center
+        //if (_chunkHasAPointInTheCenter)
+        //    foreach (var chunk in _chunks)
+        //        chunk.spline.InsertPointAt(chunk.spline.GetPointCount(), Vector3.zero);
     }
 
     private int RoundToClosestEntireDivisor(float dividend, ref float divisor)
