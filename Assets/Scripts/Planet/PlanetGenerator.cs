@@ -60,57 +60,87 @@ public class PlanetGenerator : MonoBehaviour
             DestroyImmediate(chunk.gameObject);
         _chunks = new();
 
-        for (int i = 0; i < amountOfChunks; i++)
+        for (int chunkIndex = 0; chunkIndex < amountOfChunks; chunkIndex++)
             _chunks.Add(Instantiate(_chunkPrefab, transform).GetComponent<SpriteShapeController>());
 
         // Set points
-        for (int i = 0; i < amountOfPoints; i++)
+        for (int pointIndex = 0; pointIndex < amountOfPoints; pointIndex++)
         {
             float distanceToPlanetCenter =
-                _planetRadius + _maxHillHeight * Mathf.PerlinNoise(i * _perlinNoiseScale + _perlinNoiseOffset, 0);
+                _planetRadius + _maxHillHeight * Mathf.PerlinNoise(pointIndex * _perlinNoiseScale + _perlinNoiseOffset, 0);
             Vector3 pointCoordinates = new(
-                distanceToPlanetCenter * Mathf.Sin(angularDistanceBetweenPoints * i * Mathf.Deg2Rad),
-                distanceToPlanetCenter * Mathf.Cos(angularDistanceBetweenPoints * i * Mathf.Deg2Rad));
-            int chunkIndex = Mathf.FloorToInt(angularDistanceBetweenPoints / angularSizeOfChunk * i);
-            int pointIndexInChunk = Mathf.FloorToInt(i - chunkIndex * angularSizeOfChunk / angularDistanceBetweenPoints);
+                distanceToPlanetCenter * Mathf.Sin(angularDistanceBetweenPoints * pointIndex * Mathf.Deg2Rad),
+                distanceToPlanetCenter * Mathf.Cos(angularDistanceBetweenPoints * pointIndex * Mathf.Deg2Rad));
+            int chunkIndex = GetChunk(pointIndex, angularSizeOfChunk, angularDistanceBetweenPoints);
+            int pointIndexInChunk = GetPointIndexInChunk(pointIndex, angularSizeOfChunk, angularDistanceBetweenPoints, chunkIndex);
             //Debug.Log(i - chunkIndex * (angularSizeOfChunk / angularDistanceBetweenPoints - (angularSizeOfChunk / angularDistanceBetweenPoints - Mathf.Floor(angularSizeOfChunk / angularDistanceBetweenPoints))));
             //Debug.Log($"i:{i}, chunk index: {chunkIndex}, as:{angularSizeOfChunk}, ad:{angularDistanceBetweenPoints}, as/ad:{angularSizeOfChunk/angularDistanceBetweenPoints}, as%ad:{angularSizeOfChunk % angularDistanceBetweenPoints}");
-            Debug.Log(pointIndexInChunk + " " + chunkIndex);
             if (pointIndexInChunk > _chunks[chunkIndex].spline.GetPointCount() - 1)
                 _chunks[chunkIndex].spline.InsertPointAt(pointIndexInChunk, pointCoordinates);
             else
                 _chunks[chunkIndex].spline.SetPosition(pointIndexInChunk, pointCoordinates);
         }
         // Fill in the gaps
-        for (int i = 0; i < _chunks.Count; i++)
+        for (int chunkIndex = 0; chunkIndex < _chunks.Count; chunkIndex++)
         {
-            int nextChunk = i + 1 < _chunks.Count ? i + 1 : 0;
-            _chunks[i].spline.InsertPointAt(_chunks[i].spline.GetPointCount(), _chunks[nextChunk].spline.GetPosition(0));
+            int nextChunk = chunkIndex + 1 < _chunks.Count ? chunkIndex + 1 : 0;
+            _chunks[chunkIndex].spline.InsertPointAt(_chunks[chunkIndex].spline.GetPointCount(), _chunks[nextChunk].spline.GetPosition(0));
         }
         //Set tangents
-        //for (int i = 0; i < _chunks[0].spline.GetPointCount(); i++)
-        //{
-        //    int previousPointIndex = i - 1;
-        //    if (i - 1 < 0)
-        //        previousPointIndex = _chunks[0].spline.GetPointCount() - 1;
-        //    int nextPointIndex = i + 1;
-        //    if (i + 1 > _chunks[0].spline.GetPointCount() - 1)
-        //        nextPointIndex = 0;
+        for (int pointIndex = 0; pointIndex < amountOfPoints; pointIndex++)
+        {
+            Debug.Log($"Processing {pointIndex}");
+            int chunkIndex = GetChunk(pointIndex, angularSizeOfChunk, angularDistanceBetweenPoints);
+            int previousChunkIndex = chunkIndex == 0 ? _chunks.Count - 1 : chunkIndex - 1;
+            int nextChunkIndex = chunkIndex < _chunks.Count ? chunkIndex + 1 : 0;
 
-        //    Vector3 directionToPreviousPoint = (_chunks[0].spline.GetPosition(previousPointIndex) - _chunks[0].spline.GetPosition(i)).normalized;
-        //    Vector3 directionToNextPoint = (_chunks[0].spline.GetPosition(nextPointIndex) - _chunks[0].spline.GetPosition(i)).normalized;
-        //    Vector3 average = (directionToPreviousPoint - directionToNextPoint) / 2;
-        //    average = average.normalized * _tangentScale;
+            int previousPointIndex = pointIndex == 0 ? amountOfPoints - 1 : pointIndex - 1;
+            int nextPointIndex = pointIndex < amountOfPoints ? pointIndex + 1 : 0;
 
-        //    _chunks[0].spline.SetTangentMode(i, ShapeTangentMode.Continuous);
-        //    _chunks[0].spline.SetLeftTangent(i, average);
-        //    _chunks[0].spline.SetRightTangent(i, -average);
-        //}
+            int pointIndexInChunk = GetPointIndexInChunk(
+                pointIndex, angularSizeOfChunk,
+                angularDistanceBetweenPoints, chunkIndex);
+
+            int previousPointChunk = pointIndexInChunk == 0 ? previousChunkIndex : chunkIndex;
+            int nextPointChunk = pointIndexInChunk < _chunks[chunkIndex].spline.GetPointCount() ? chunkIndex : nextChunkIndex;
+
+            int previousPointIndexInChunk = GetPointIndexInChunk(
+                previousPointIndex, angularSizeOfChunk, 
+                angularDistanceBetweenPoints, previousPointChunk);
+            int nextPointIndexInChunk = GetPointIndexInChunk(
+                nextPointIndex, angularSizeOfChunk,
+                angularDistanceBetweenPoints, nextPointChunk);
+
+            if (previousPointIndexInChunk == _chunks[previousPointChunk].spline.GetPointCount() - 1)
+                previousPointIndexInChunk--;
+            if (nextPointIndexInChunk == 0)
+                nextPointIndexInChunk++;
+
+            Debug.Log(previousPointChunk + " " + nextPointChunk);
+            Vector3 previousPointPosition = _chunks[previousPointChunk].spline.GetPosition(previousPointIndexInChunk);
+            Vector3 nextPointPosition = _chunks[nextPointChunk].spline.GetPosition(nextPointIndexInChunk);
+            Vector3 pointPosition = _chunks[chunkIndex].spline.GetPosition(pointIndexInChunk);
+
+            Vector3 directionToPreviousPoint = (previousPointPosition - pointPosition).normalized;
+            Vector3 directionToNextPoint = (nextPointPosition - pointPosition).normalized;
+            Vector3 tangentValue = (directionToPreviousPoint - directionToNextPoint) / 2;
+            tangentValue = tangentValue.normalized * _tangentScale;
+            bool firstPointInChunk = pointIndexInChunk == 0;
+            bool lastPointInChunk = pointIndexInChunk == _chunks[chunkIndex].spline.GetPointCount() - 1;
+            Vector3 leftTangent = firstPointInChunk ? Vector3.zero : tangentValue;
+            Vector3 rightTangent = lastPointInChunk ? Vector3.zero : -tangentValue;
+
+            _chunks[chunkIndex].spline.SetTangentMode(pointIndexInChunk, ShapeTangentMode.Broken);
+            _chunks[chunkIndex].spline.SetLeftTangent(pointIndexInChunk, leftTangent);
+            _chunks[chunkIndex].spline.SetRightTangent(pointIndexInChunk, rightTangent);
+        }
         // Add a point in the center
         if (_chunkHasAPointInTheCenter)
             foreach (var chunk in _chunks)
                 chunk.spline.InsertPointAt(chunk.spline.GetPointCount(), Vector3.zero);
+        Debug.Log("finished");
     }
+
 
     private int RoundToClosestEntireDivisor(float dividend, ref float divisor)
     {
@@ -126,25 +156,12 @@ public class PlanetGenerator : MonoBehaviour
         //_shape = GetComponent<SpriteShapeController>();
         _chunks = GetComponentsInChildren<SpriteShapeController>().ToList();
     }
-    private void ResetTerrain()
+    private int GetChunk(int pointIndex, float chunkSize, float distanceBetweenPoints)
     {
-
-        foreach(var chunk in _chunks)
-        {
-            chunk.spline.isOpenEnded = _isOpenEnded;
-            // Leave 2 points in a chunk
-            int howManyPointsToLeave = 2;
-            if (chunk.spline.GetPointCount() > 0)
-                for (int i = chunk.spline.GetPointCount() - 1; i > howManyPointsToLeave - 1; i--)
-                    chunk.spline.RemovePointAt(i);
-
-            chunk.spline.SetPosition(0, new Vector3(0, 0));
-            chunk.spline.SetLeftTangent(0, new Vector3(-1, 0) * _tangentScale);
-            chunk.spline.SetRightTangent(0, new Vector3(1, 0) * _tangentScale);
-
-            chunk.spline.SetPosition(1, new Vector3(1, 0));
-            chunk.spline.SetLeftTangent(1, new Vector3(-1, 0) * _tangentScale);
-            chunk.spline.SetRightTangent(1, new Vector3(1, 0) * _tangentScale);
-        }
+        return Mathf.FloorToInt(distanceBetweenPoints / chunkSize * pointIndex);
+    }
+    private static int GetPointIndexInChunk(int pointIndex, float chunkSize, float distanceBetweenPoints, int chunkIndex)
+    {
+        return Mathf.FloorToInt(pointIndex - chunkIndex * chunkSize / distanceBetweenPoints);
     }
 }
