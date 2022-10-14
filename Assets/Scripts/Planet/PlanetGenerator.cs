@@ -73,8 +73,6 @@ public class PlanetGenerator : MonoBehaviour
                 distanceToPlanetCenter * Mathf.Cos(angularDistanceBetweenPoints * pointIndex * Mathf.Deg2Rad));
             int chunkIndex = GetChunk(pointIndex, angularSizeOfChunk, angularDistanceBetweenPoints);
             int pointIndexInChunk = GetPointIndexInChunk(pointIndex, angularSizeOfChunk, angularDistanceBetweenPoints, chunkIndex);
-            //Debug.Log(i - chunkIndex * (angularSizeOfChunk / angularDistanceBetweenPoints - (angularSizeOfChunk / angularDistanceBetweenPoints - Mathf.Floor(angularSizeOfChunk / angularDistanceBetweenPoints))));
-            //Debug.Log($"i:{i}, chunk index: {chunkIndex}, as:{angularSizeOfChunk}, ad:{angularDistanceBetweenPoints}, as/ad:{angularSizeOfChunk/angularDistanceBetweenPoints}, as%ad:{angularSizeOfChunk % angularDistanceBetweenPoints}");
             if (pointIndexInChunk > _chunks[chunkIndex].spline.GetPointCount() - 1)
                 _chunks[chunkIndex].spline.InsertPointAt(pointIndexInChunk, pointCoordinates);
             else
@@ -91,18 +89,21 @@ public class PlanetGenerator : MonoBehaviour
         {
             Debug.Log($"Processing {pointIndex}");
             int chunkIndex = GetChunk(pointIndex, angularSizeOfChunk, angularDistanceBetweenPoints);
+            int pointIndexInChunk = GetPointIndexInChunk(
+                pointIndex, angularSizeOfChunk,
+                angularDistanceBetweenPoints, chunkIndex);
+
+            bool firstPointInChunk = pointIndexInChunk == 0;
+            bool lastPointInChunk = pointIndexInChunk == _chunks[chunkIndex].spline.GetPointCount() - 1;
+
             int previousChunkIndex = chunkIndex == 0 ? _chunks.Count - 1 : chunkIndex - 1;
             int nextChunkIndex = chunkIndex < _chunks.Count ? chunkIndex + 1 : 0;
 
             int previousPointIndex = pointIndex == 0 ? amountOfPoints - 1 : pointIndex - 1;
             int nextPointIndex = pointIndex < amountOfPoints ? pointIndex + 1 : 0;
 
-            int pointIndexInChunk = GetPointIndexInChunk(
-                pointIndex, angularSizeOfChunk,
-                angularDistanceBetweenPoints, chunkIndex);
-
-            int previousPointChunk = pointIndexInChunk == 0 ? previousChunkIndex : chunkIndex;
-            int nextPointChunk = pointIndexInChunk < _chunks[chunkIndex].spline.GetPointCount() ? chunkIndex : nextChunkIndex;
+            int previousPointChunk = firstPointInChunk ? previousChunkIndex : chunkIndex;
+            int nextPointChunk = lastPointInChunk ? nextChunkIndex : chunkIndex;
 
             int previousPointIndexInChunk = GetPointIndexInChunk(
                 previousPointIndex, angularSizeOfChunk, 
@@ -117,6 +118,7 @@ public class PlanetGenerator : MonoBehaviour
                 nextPointIndexInChunk++;
 
             Debug.Log(previousPointChunk + " " + nextPointChunk);
+            Debug.Log(nextPointIndexInChunk);
             Vector3 previousPointPosition = _chunks[previousPointChunk].spline.GetPosition(previousPointIndexInChunk);
             Vector3 nextPointPosition = _chunks[nextPointChunk].spline.GetPosition(nextPointIndexInChunk);
             Vector3 pointPosition = _chunks[chunkIndex].spline.GetPosition(pointIndexInChunk);
@@ -125,8 +127,6 @@ public class PlanetGenerator : MonoBehaviour
             Vector3 directionToNextPoint = (nextPointPosition - pointPosition).normalized;
             Vector3 tangentValue = (directionToPreviousPoint - directionToNextPoint) / 2;
             tangentValue = tangentValue.normalized * _tangentScale;
-            bool firstPointInChunk = pointIndexInChunk == 0;
-            bool lastPointInChunk = pointIndexInChunk == _chunks[chunkIndex].spline.GetPointCount() - 1;
             Vector3 leftTangent = firstPointInChunk ? Vector3.zero : tangentValue;
             Vector3 rightTangent = lastPointInChunk ? Vector3.zero : -tangentValue;
 
