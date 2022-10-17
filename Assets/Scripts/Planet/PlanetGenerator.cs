@@ -64,6 +64,7 @@ public class PlanetGenerator : MonoBehaviour
         // Set points
         for (int pointIndex = 0; pointIndex < amountOfPoints; pointIndex++)
         {
+            Debug.Log($"Processing {pointIndex}");
             float distanceToPlanetCenter =
                 _planetRadius + _maxHillHeight * Mathf.PerlinNoise(pointIndex * _perlinNoiseScale + _perlinNoiseOffset, 0);
             Vector3 pointCoordinates = new(
@@ -79,7 +80,6 @@ public class PlanetGenerator : MonoBehaviour
         //Set tangents
         for (int pointIndex = 0; pointIndex < amountOfPoints; pointIndex++)
         {
-            Debug.Log($"Processing {pointIndex}");
 
             // Current point
             int chunkIndex = GetChunk(pointIndex, angularSizeOfChunk, angularDistanceBetweenPoints);
@@ -148,7 +148,8 @@ public class PlanetGenerator : MonoBehaviour
     private int GetPointIndexInChunk(int pointIndex, float chunkSize, float distanceBetweenPoints)
     {
         int chunkIndex = GetChunk(pointIndex, chunkSize, distanceBetweenPoints);
-        return Mathf.FloorToInt(pointIndex - chunkIndex * chunkSize / distanceBetweenPoints);
+        int index = Mathf.FloorToInt(pointIndex - chunkIndex * chunkSize / distanceBetweenPoints);
+        return index < 0 ? 0 : index;
     }
     private static int GetPointIndexInChunk(int pointIndex, float chunkSize, float distanceBetweenPoints, int chunkIndex)
     {
