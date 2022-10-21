@@ -26,7 +26,6 @@ public class WorldOriginShifter : MonoBehaviour
             if (obj.transform.parent != null)
                 continue;
             obj.transform.Translate(xShift, yShift, 0, Space.World);
-            Debug.Log(obj.name);
         }
     }
 }

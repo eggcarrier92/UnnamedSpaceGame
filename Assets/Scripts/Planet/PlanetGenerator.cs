@@ -27,12 +27,15 @@ public class PlanetGenerator : MonoBehaviour
     private GameObject _chunkPrefab;
     [SerializeField, Tooltip("Size of one chunk in meters. This value will be rounded to the closest value that the planet's circumference is entirely divisible by.")]
     private float _chunkSize = 1000f;
-    [SerializeField] 
-    private bool _chunkHasAPointInTheCenter = true;
+    [SerializeField]
+    private float _chunkDepth = 50f;
+    [SerializeField]
+    private bool _enableChunks = false;
 
     /*-------------------------------------------------------------*/
 
     private List<SpriteShapeController> _chunks;
+    private Transform _transform;
 
     public void Generate()
     {
@@ -120,10 +123,20 @@ public class PlanetGenerator : MonoBehaviour
             _chunks[chunkIndex].spline.SetTangentMode(pointIndex, ShapeTangentMode.Broken);
             _chunks[chunkIndex].spline.SetLeftTangent(pointIndex, -_chunks[nextChunk].spline.GetRightTangent(0));
         }
-        // Add a point in the center
-        if (_chunkHasAPointInTheCenter)
-            foreach (var chunk in _chunks)
-                chunk.spline.InsertPointAt(chunk.spline.GetPointCount(), Vector3.zero);
+        // Add depth
+        _chunkDepth = Mathf.Clamp(_chunkDepth, 0, _planetRadius);
+        foreach (var chunk in _chunks)
+        {
+            Vector3 firstPointCoords =
+                chunk.spline.GetPosition(chunk.spline.GetPointCount() - 1).normalized * (_planetRadius - _chunkDepth);
+            Vector3 secondPointCoords =
+                chunk.spline.GetPosition(0).normalized * (_planetRadius - _chunkDepth);
+            chunk.spline.InsertPointAt(chunk.spline.GetPointCount(), firstPointCoords);
+            chunk.spline.InsertPointAt(chunk.spline.GetPointCount(), secondPointCoords);
+        }
+        GetComponent<PlanetControls>().DisableChunks();
+        if (_enableChunks)
+            GetComponent<PlanetControls>().EnableChunks();
         Debug.Log("finished");
     }
 
@@ -138,8 +151,8 @@ public class PlanetGenerator : MonoBehaviour
 
     private void InitializeComponents()
     {
-        //_shape = GetComponent<SpriteShapeController>();
-        _chunks = GetComponentsInChildren<SpriteShapeController>().ToList();
+        _chunks = GetComponentsInChildren<SpriteShapeController>(true).ToList();
+        _transform = GetComponent<Transform>();
     }
     private int GetChunk(int pointIndex, float chunkSize, float distanceBetweenPoints)
     {
@@ -150,9 +163,5 @@ public class PlanetGenerator : MonoBehaviour
         int chunkIndex = GetChunk(pointIndex, chunkSize, distanceBetweenPoints);
         int index = Mathf.FloorToInt(pointIndex - chunkIndex * chunkSize / distanceBetweenPoints);
         return index < 0 ? 0 : index;
-    }
-    private static int GetPointIndexInChunk(int pointIndex, float chunkSize, float distanceBetweenPoints, int chunkIndex)
-    {
-        return Mathf.FloorToInt(pointIndex - chunkIndex * chunkSize / distanceBetweenPoints);
     }
 }

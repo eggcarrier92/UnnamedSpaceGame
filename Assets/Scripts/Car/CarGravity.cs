@@ -7,8 +7,7 @@ public class CarGravity : MonoBehaviour
 {
     [SerializeField] private Rigidbody2D _carRigidbody;
     [SerializeField] private GameObject _attractor;
-    [SerializeField] private float _gravitationalConstant = 1f;
-    [SerializeField] private float _attractorMass = 1000f;
+    [SerializeField] private float _gravityAcceleration = 9.81f;
 
     private List<Rigidbody2D> _allRigidbodies;
     private float _globalMass;
@@ -33,7 +32,7 @@ public class CarGravity : MonoBehaviour
         foreach (var rigidbody in _allRigidbodies)
         {
             Vector2 directionToBody = (Vector2)_attractor.transform.position - rigidbody.position;
-            Vector2 force = rigidbody.mass * _attractorMass * _gravitationalConstant / directionToBody.sqrMagnitude * directionToBody.normalized;
+            Vector2 force = rigidbody.mass * _gravityAcceleration * directionToBody.normalized;
             rigidbody.AddForce(force);
             _gravityForce += force;
             _globalMass += rigidbody.mass;
